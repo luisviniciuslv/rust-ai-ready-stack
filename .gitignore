@@ -1,0 +1,8 @@
+/target
+*.pdf
+*.fastembed_cache
+data
+.env
+*.pem
+*.cargo
+.vscode
