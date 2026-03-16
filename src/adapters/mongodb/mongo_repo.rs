@@ -8,6 +8,7 @@ use mongodb::{
     Client, Collection, Database, IndexModel,
 };
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::path::PathBuf;
 
 #[derive(Clone)]
@@ -20,16 +21,57 @@ impl MongoRepo {
         // Parse da string de conexão base (host, porta, credenciais)
         let mut client_options = ClientOptions::parse(uri).await.map_err(to_app_error)?;
 
-        // Configura as opções de TLS
-        // Equivalente ao Python: tls=True, tlsCAFile=..., tlsCertificateKeyFile=...
-        let tls_config = TlsOptions::builder()
-            .ca_file_path(PathBuf::from("./keys/certificate.pem"))
-            .cert_key_file_path(PathBuf::from("./keys/certificate.pem"))
-            .allow_invalid_certificates(true)
-            .build();
+        let tls_enabled = env::var("MONGODB_TLS_ENABLED")
+            .ok()
+            .map(|value| {
+                matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                )
+            })
+            .unwrap_or(false);
 
-        // Aplica o TLS nas opções do cliente
-        client_options.tls = Some(Tls::Enabled(tls_config));
+        if tls_enabled {
+            let allow_invalid_certificates = env::var("MONGODB_TLS_ALLOW_INVALID_CERTIFICATES")
+                .ok()
+                .map(|value| {
+                    matches!(
+                        value.trim().to_ascii_lowercase().as_str(),
+                        "1" | "true" | "yes" | "on"
+                    )
+                })
+                .unwrap_or(true);
+
+            let ca_file_path = env::var("MONGODB_TLS_CA_FILE")
+                .ok()
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty());
+
+            let cert_key_file_path = env::var("MONGODB_TLS_CERT_KEY_FILE")
+                .ok()
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty());
+
+            let tls_config = match (ca_file_path, cert_key_file_path) {
+                (Some(ca_path), Some(cert_path)) => TlsOptions::builder()
+                    .allow_invalid_certificates(allow_invalid_certificates)
+                    .ca_file_path(PathBuf::from(ca_path))
+                    .cert_key_file_path(PathBuf::from(cert_path))
+                    .build(),
+                (Some(ca_path), None) => TlsOptions::builder()
+                    .allow_invalid_certificates(allow_invalid_certificates)
+                    .ca_file_path(PathBuf::from(ca_path))
+                    .build(),
+                (None, Some(cert_path)) => TlsOptions::builder()
+                    .allow_invalid_certificates(allow_invalid_certificates)
+                    .cert_key_file_path(PathBuf::from(cert_path))
+                    .build(),
+                (None, None) => TlsOptions::builder()
+                    .allow_invalid_certificates(allow_invalid_certificates)
+                    .build(),
+            };
+            client_options.tls = Some(Tls::Enabled(tls_config));
+        }
 
         // Cria o cliente com as opções completas
         let client = Client::with_options(client_options).map_err(to_app_error)?;
