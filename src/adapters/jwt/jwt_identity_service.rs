@@ -1,5 +1,5 @@
 use crate::adapters::jwt::{jwt_decode_error, jwt_encode_error};
-use crate::domain::entities::{AuthClaims, GoogleUser};
+use crate::domain::entities::{AuthClaims, AuthIdentity};
 use crate::domain::errors::DomainError;
 use crate::domain::ports::IdentityService;
 use crate::domain::value_objects::Email;
@@ -51,7 +51,7 @@ impl JwtIdentityService {
 }
 
 impl IdentityService for JwtIdentityService {
-    fn generate_token(&self, user: &GoogleUser) -> Result<String, DomainError> {
+    fn generate_token(&self, identity: &AuthIdentity) -> Result<String, DomainError> {
         let now = Utc::now();
         let iat = now.timestamp() as usize;
         let exp = (now + chrono::Duration::hours(self.expires_in_hours)).timestamp() as usize;
@@ -61,10 +61,10 @@ impl IdentityService for JwtIdentityService {
             exp,
             iat,
             iss: self.issuer.clone(),
-            sub: user.sub.clone(),
-            email: user.email.as_str().to_string(),
-            name: user.name.clone(),
-            picture: user.picture.clone(),
+            sub: identity.sub.clone(),
+            email: identity.email.as_str().to_string(),
+            name: identity.name.clone(),
+            picture: identity.picture.clone(),
         };
 
         encode(

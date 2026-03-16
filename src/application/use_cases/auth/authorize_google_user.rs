@@ -1,4 +1,4 @@
-use crate::domain::entities::GoogleUser;
+use crate::domain::entities::{AuthIdentity, GoogleUser};
 use crate::domain::errors::DomainError;
 use crate::domain::ports::{GoogleOAuthProvider, IdentityService, SessionCookieService};
 use std::sync::Arc;
@@ -13,6 +13,8 @@ pub struct AuthorizeGoogleUserUseCase {
     google_oauth_provider: Arc<dyn GoogleOAuthProvider>,
     identity_service: Arc<dyn IdentityService>,
     session_cookie_service: Arc<dyn SessionCookieService>,
+    require_verified_email: bool,
+    allowed_email_domains: Vec<String>,
 }
 
 impl AuthorizeGoogleUserUseCase {
@@ -20,11 +22,15 @@ impl AuthorizeGoogleUserUseCase {
         google_oauth_provider: Arc<dyn GoogleOAuthProvider>,
         identity_service: Arc<dyn IdentityService>,
         session_cookie_service: Arc<dyn SessionCookieService>,
+        require_verified_email: bool,
+        allowed_email_domains: Vec<String>,
     ) -> Self {
         Self {
             google_oauth_provider,
             identity_service,
             session_cookie_service,
+            require_verified_email,
+            allowed_email_domains,
         }
     }
 
@@ -41,14 +47,14 @@ impl AuthorizeGoogleUserUseCase {
             .fetch_user_by_code(authorization_code, &redirect_uri)
             .await?;
 
-        let Some(user) = Self::ensure_allowed_user(user) else {
+        let Some(identity) = self.ensure_allowed_user(user) else {
             return Ok(AuthorizeGoogleUserResult {
                 redirect_url: frontend_url.to_string(),
                 auth_cookie: None,
             });
         };
 
-        let token = self.identity_service.generate_token(&user)?;
+        let token = self.identity_service.generate_token(&identity)?;
         let auth_cookie = self.session_cookie_service.build_auth_cookie(&token);
 
         Ok(AuthorizeGoogleUserResult {
@@ -57,20 +63,32 @@ impl AuthorizeGoogleUserUseCase {
         })
     }
 
-    fn ensure_allowed_user(user: GoogleUser) -> Option<GoogleUser> {
-        if !user.email_verified {
+    fn ensure_allowed_user(&self, user: GoogleUser) -> Option<AuthIdentity> {
+        if self.require_verified_email && !user.email_verified {
             return None;
         }
 
-        let is_domain_allowed = matches!(
-            user.email.as_str().split('@').next_back(),
-            Some("tudoemnuvem.com.br") | Some("tudoemnuvem.tec.br")
-        );
+        let email_domain = user
+            .email
+            .as_str()
+            .split('@')
+            .next_back()
+            .map(|d| d.to_lowercase());
+
+        let is_domain_allowed = self.allowed_email_domains.is_empty()
+            || email_domain
+                .as_ref()
+                .is_some_and(|domain| self.allowed_email_domains.iter().any(|d| d == domain));
 
         if !is_domain_allowed {
             return None;
         }
 
-        Some(user)
+        Some(AuthIdentity {
+            sub: user.sub,
+            email: user.email,
+            name: user.name,
+            picture: user.picture,
+        })
     }
 }

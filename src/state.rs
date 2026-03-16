@@ -3,7 +3,7 @@ use crate::{
     application::use_cases::{
         auth::{
             AuthorizeGoogleUserUseCase, BuildGoogleOAuthUrlUseCase, GetUserProfileUseCase,
-            SignOutUseCase,
+            LocalSignInConfig, LocalSignInUseCase, SignOutUseCase,
         },
         chat::{ChatConversationUseCase, IngestDocumentUseCase},
     },
@@ -19,6 +19,7 @@ use tokio::sync::RwLock;
 pub struct UseCases {
     pub build_google_oauth_url: BuildGoogleOAuthUrlUseCase,
     pub authorize_google_user: AuthorizeGoogleUserUseCase,
+    pub local_sign_in: LocalSignInUseCase,
     pub chat_conversation: ChatConversationUseCase,
     pub ingest_document: IngestDocumentUseCase,
     pub sign_out: SignOutUseCase,
@@ -39,6 +40,9 @@ impl UseCases {
         identity_service: Arc<dyn IdentityService>,
         oauth_authorization_url_builder: Arc<dyn OAuthAuthorizationUrlBuilder>,
         session_cookie_service: Arc<dyn SessionCookieService>,
+        local_sign_in_config: LocalSignInConfig,
+        require_google_verified_email: bool,
+        allowed_google_email_domains: Vec<String>,
         openai_client: Client<OpenAIConfig>,
     ) -> Self {
         Self {
@@ -49,6 +53,13 @@ impl UseCases {
                 Arc::clone(&google_oauth_provider),
                 Arc::clone(&identity_service),
                 Arc::clone(&session_cookie_service),
+                require_google_verified_email,
+                allowed_google_email_domains,
+            ),
+            local_sign_in: LocalSignInUseCase::new(
+                Arc::clone(&identity_service),
+                Arc::clone(&session_cookie_service),
+                local_sign_in_config,
             ),
             chat_conversation: ChatConversationUseCase::new_openai(
                 openai_client.clone(),
