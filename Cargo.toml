@@ -2,6 +2,7 @@
 name = "rust-ai-ready-stack"
 version = "0.1.0"
 edition = "2021" # Mudei para 2021 pois 2024 ainda é instável
+default-run = "rust-ai-ready-stack"
 
 [dependencies]
 anyhow = "1.0"

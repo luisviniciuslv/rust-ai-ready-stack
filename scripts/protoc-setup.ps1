@@ -21,6 +21,10 @@ Expand-Archive -Force $zipPath $toolsDir
 New-Item -ItemType Directory -Force -Path ".cargo" | Out-Null
 
 $config = @"
+[alias]
+protoc-setup = "run --quiet --bin xtask -- protoc-setup"
+protoc-clean = "run --quiet --bin xtask -- protoc-clean"
+
 [env]
 PROTOC = { value = "$protocBin", relative = true }
 "@

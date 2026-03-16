@@ -14,6 +14,12 @@ Na raiz do projeto, execute:
 powershell -ExecutionPolicy Bypass -File .\scripts\protoc-setup.ps1
 ```
 
+Ou, usando alias do Cargo:
+
+```powershell
+cargo protoc-setup
+```
+
 ### Linux / macOS
 
 ```bash
@@ -43,11 +49,35 @@ Para remover os artefatos locais de `protoc` e o `config.toml`:
 powershell -ExecutionPolicy Bypass -File .\scripts\protoc-clean.ps1
 ```
 
+Ou, usando alias do Cargo:
+
+```powershell
+cargo protoc-clean
+```
+
 ### Linux / macOS
 
 ```bash
 make protoc-clean
 ```
+
+## Como o `cargo protoc-*` funciona (xtask)
+
+Os comandos abaixo são aliases do Cargo que chamam o binário interno `xtask`:
+
+```powershell
+cargo protoc-setup
+cargo protoc-clean
+``` 
+
+Fluxo:
+
+1. `cargo` executa `src/bin/xtask.rs`
+2. O `xtask` detecta o sistema operacional
+3. No Windows, ele chama os scripts em `scripts/*.ps1`
+4. Em Linux/macOS, ele chama os alvos do `Makefile`
+
+Isso permite usar os mesmos comandos de projeto sem depender de aliases de shell.
 
 ## Nota
 

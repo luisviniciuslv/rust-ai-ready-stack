@@ -23,17 +23,19 @@ protoc-setup:
 	@echo "[protoc] Downloading $(PROTOC_URL)"
 	@mkdir -p $(PROTOC_HOME)
 ifeq ($(OS),Windows_NT)
-	@powershell -NoProfile -Command "$$ErrorActionPreference='Stop'; New-Item -ItemType Directory -Force -Path '$(PROTOC_HOME)' | Out-Null; Invoke-WebRequest -Uri '$(PROTOC_URL)' -OutFile '$(PROTOC_HOME)/$(PROTOC_ZIP)'; Expand-Archive -Force '$(PROTOC_HOME)/$(PROTOC_ZIP)' '$(PROTOC_HOME)'; New-Item -ItemType Directory -Force -Path '.cargo' | Out-Null; Set-Content -Encoding UTF8 .cargo/config.toml \"[env]`nPROTOC = { value = \\\"$(PROTOC_BIN)\\\", relative = true }\""
+	@powershell -NoProfile -Command "$$ErrorActionPreference='Stop'; New-Item -ItemType Directory -Force -Path '$(PROTOC_HOME)' | Out-Null; Invoke-WebRequest -Uri '$(PROTOC_URL)' -OutFile '$(PROTOC_HOME)/$(PROTOC_ZIP)'; Expand-Archive -Force '$(PROTOC_HOME)/$(PROTOC_ZIP)' '$(PROTOC_HOME)'; New-Item -ItemType Directory -Force -Path '.cargo' | Out-Null; $$cfg = @\"[alias]`nprotoc-setup = \"run --quiet --bin xtask -- protoc-setup\"`nprotoc-clean = \"run --quiet --bin xtask -- protoc-clean\"`n`n[env]`nPROTOC = { value = \"$(PROTOC_BIN)\", relative = true }\"@; Set-Content -Encoding UTF8 .cargo/config.toml $$cfg"
 else
 	@curl -fsSL "$(PROTOC_URL)" -o "$(PROTOC_HOME)/$(PROTOC_ZIP)"
 	@unzip -oq "$(PROTOC_HOME)/$(PROTOC_ZIP)" -d "$(PROTOC_HOME)"
 	@chmod +x "$(PROTOC_BIN)"
 	@mkdir -p .cargo
-	@printf '[env]\nPROTOC = { value = "$(PROTOC_BIN)", relative = true }\n' > .cargo/config.toml
+	@printf '[alias]\nprotoc-setup = "run --quiet --bin xtask -- protoc-setup"\nprotoc-clean = "run --quiet --bin xtask -- protoc-clean"\n\n[env]\nPROTOC = { value = "$(PROTOC_BIN)", relative = true }\n' > .cargo/config.toml
 endif
 	@echo "[protoc] Configured: $(PROTOC_BIN)"
 	@echo "[protoc] Cargo env written to .cargo/config.toml"
 
 protoc-clean:
 	@echo "[protoc] Cleaning local protoc artifacts"
-	@rm -rf "$(PROTOC_HOME)" .cargo/config.toml
+	@rm -rf "$(PROTOC_HOME)"
+	@mkdir -p .cargo
+	@printf '[alias]\nprotoc-setup = "run --quiet --bin xtask -- protoc-setup"\nprotoc-clean = "run --quiet --bin xtask -- protoc-clean"\n' > .cargo/config.toml
