@@ -1,5 +1,5 @@
 use crate::{
-    adapters::openai::OpenAiEmbeddingGenerator,
+    adapters::openai::{OpenAiEmbeddingGenerator, OpenAiRagChatProvider},
     application::use_cases::{
         auth::{
             AuthorizeGoogleUserUseCase, BuildGoogleOAuthUrlUseCase, GetUserProfileUseCase,
@@ -61,11 +61,11 @@ impl UseCases {
                 Arc::clone(&session_cookie_service),
                 local_sign_in_config,
             ),
-            chat_conversation: ChatConversationUseCase::new_openai(
+            chat_conversation: ChatConversationUseCase::new(Arc::new(OpenAiRagChatProvider::new(
                 openai_client.clone(),
                 Arc::clone(&document_repo),
                 Arc::new(OpenAiEmbeddingGenerator::new(openai_client.clone())),
-            ),
+            ))),
             ingest_document: IngestDocumentUseCase::new(
                 Arc::clone(&document_repo),
                 Arc::new(OpenAiEmbeddingGenerator::new(openai_client.clone())),

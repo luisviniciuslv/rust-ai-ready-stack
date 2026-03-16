@@ -12,9 +12,6 @@ use crate::domain::errors::DomainError;
 /// Implementa o padrão thiserror para mensagens de erro limpas
 #[derive(Error, Debug)]
 pub enum AppError {
-    /// Erro ao processar requisição OpenAI
-    #[error("Erro ao processar OpenAI: {0}")]
-    OpenAiError(String),
 
     /// Erro ao acessar banco de dados vetorial
     #[error("Erro no banco de dados vetorial: {0}")]
@@ -65,7 +62,6 @@ impl AppError {
             AppError::Conflict(_) => StatusCode::CONFLICT,
 
             AppError::ValidationError(_)
-            | AppError::OpenAiError(_)
             | AppError::VectorDbError(_)
             | AppError::HttpError(_)
             | AppError::JsonError(_)
