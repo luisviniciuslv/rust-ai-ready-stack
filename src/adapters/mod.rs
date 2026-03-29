@@ -1,5 +1,4 @@
 pub(crate) mod anthropic;
-pub(crate) mod email;
 pub(crate) mod google;
 pub(crate) mod http;
 pub(crate) mod jwt;

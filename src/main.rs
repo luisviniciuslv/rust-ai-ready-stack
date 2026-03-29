@@ -5,7 +5,6 @@ mod endpoints;
 mod error;
 mod middleware;
 mod state;
-mod templates;
 mod utils;
 
 use crate::adapters::google::{

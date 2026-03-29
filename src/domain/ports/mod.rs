@@ -1,6 +1,5 @@
 pub mod chat_provider;
 pub mod document_repository;
-pub mod email_sender;
 pub mod embedding_generator;
 pub mod google_oauth_provider;
 pub mod identity_service;
@@ -10,7 +9,6 @@ pub mod user_repository;
 
 pub use chat_provider::{ChatProvider, ChatProviderResponse};
 pub use document_repository::DocumentRepository;
-pub use email_sender::EmailSender;
 pub use embedding_generator::EmbeddingGenerator;
 pub use google_oauth_provider::GoogleOAuthProvider;
 pub use identity_service::IdentityService;
