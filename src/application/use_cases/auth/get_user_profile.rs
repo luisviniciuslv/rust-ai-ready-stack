@@ -4,8 +4,6 @@ use std::sync::Arc;
 
 pub struct ProfileData {
     pub user_id: String,
-    pub department_id: String,
-    pub is_manager: bool,
     pub is_admin: bool,
 }
 
@@ -33,8 +31,6 @@ impl GetUserProfileUseCase {
 
         Ok(ProfileData {
             user_id,
-            department_id: user.department_id().to_string(),
-            is_manager: user.is_manager(),
             is_admin: user.is_admin(),
         })
     }

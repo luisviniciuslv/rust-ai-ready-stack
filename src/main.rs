@@ -49,7 +49,12 @@ use tower_http::{catch_panic::CatchPanicLayer, cors::CorsLayer};
 fn env_flag(name: &str, default: bool) -> bool {
     std::env::var(name)
         .ok()
-        .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+        .map(|v| {
+            matches!(
+                v.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
         .unwrap_or(default)
 }
 
@@ -77,11 +82,12 @@ async fn main() -> anyhow::Result<()> {
 
     let google_client_id = std::env::var("GOOGLE_CLIENT_ID").unwrap_or_default();
     let google_client_secret = std::env::var("GOOGLE_CLIENT_SECRET").unwrap_or_default();
-    let google_oauth_enabled = !google_client_id.trim().is_empty() && !google_client_secret.trim().is_empty();
+    let google_oauth_enabled =
+        !google_client_id.trim().is_empty() && !google_client_secret.trim().is_empty();
 
     let mongo_uri = std::env::var("MONGODB_URI").context("MONGODB_URI deve estar no .env")?;
-    let mongo_db_name = std::env::var("MONGODB_DB_NAME")
-        .unwrap_or_else(|_| "rust_ai_ready_stack_db".to_string());
+    let mongo_db_name =
+        std::env::var("MONGODB_DB_NAME").unwrap_or_else(|_| "rust_ai_ready_stack_db".to_string());
 
     let mongo_repo = MongoRepo::new(&mongo_uri, &mongo_db_name)
         .await
@@ -101,21 +107,23 @@ async fn main() -> anyhow::Result<()> {
             google_client_secret,
         ))
     } else {
-        println!("Google OAuth desabilitado: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET não configurados");
+        println!(
+            "Google OAuth desabilitado: GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET não configurados"
+        );
         Arc::new(DisabledGoogleOAuthProvider)
     };
 
-    let oauth_authorization_url_builder: Arc<dyn OAuthAuthorizationUrlBuilder> = if google_oauth_enabled {
-        Arc::new(GoogleOAuthAuthorizationUrlBuilder::new(google_client_id))
-    } else {
-        Arc::new(DisabledOAuthAuthorizationUrlBuilder)
-    };
+    let oauth_authorization_url_builder: Arc<dyn OAuthAuthorizationUrlBuilder> =
+        if google_oauth_enabled {
+            Arc::new(GoogleOAuthAuthorizationUrlBuilder::new(google_client_id))
+        } else {
+            Arc::new(DisabledOAuthAuthorizationUrlBuilder)
+        };
 
     let jwt_secret = std::env::var("JWT_SECRET").context("JWT_SECRET deve estar no .env")?;
     let identity_service: Arc<dyn IdentityService> = Arc::new(JwtIdentityService::new(jwt_secret));
 
-    let cookie_domain =
-        std::env::var("COOKIE_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+    let cookie_domain = std::env::var("COOKIE_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
     let session_cookie_service: Arc<dyn SessionCookieService> =
         Arc::new(AxumSessionCookieService::new(cookie_domain));
 

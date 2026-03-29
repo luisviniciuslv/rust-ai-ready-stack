@@ -1,7 +1,4 @@
-use crate::{
-    error::AppResult,
-    state::AppState,
-};
+use crate::{error::AppResult, state::AppState};
 use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

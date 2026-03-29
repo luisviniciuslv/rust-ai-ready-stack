@@ -46,7 +46,9 @@ impl LocalSignInUseCase {
         let password_matches = password == self.config.password;
 
         if !email_matches || !password_matches {
-            return Err(DomainError::Unauthorized("Credenciais inválidas".to_string()));
+            return Err(DomainError::Unauthorized(
+                "Credenciais inválidas".to_string(),
+            ));
         }
 
         let email_value = Email::new(self.config.email.clone())?;

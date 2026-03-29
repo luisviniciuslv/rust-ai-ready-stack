@@ -12,8 +12,6 @@ pub struct ProfileResponse {
     pub email: String,
     pub name: String,
     pub picture: String,
-    pub department_id: Option<String>,
-    pub is_manager: Option<bool>,
     pub is_admin: Option<bool>,
 }
 
@@ -33,14 +31,12 @@ pub async fn get_user_profile(
     };
 
     Ok(Json(ProfileResponse {
-        user_id: user_profile_data.as_ref().map(|profile| profile.user_id.clone()),
+        user_id: user_profile_data
+            .as_ref()
+            .map(|profile| profile.user_id.clone()),
         email: claims.email,
         name: claims.name,
         picture: claims.picture,
-        department_id: user_profile_data
-            .as_ref()
-            .map(|profile| profile.department_id.clone()),
-        is_manager: user_profile_data.as_ref().map(|profile| profile.is_manager),
         is_admin: user_profile_data.as_ref().map(|profile| profile.is_admin),
     }))
 }

@@ -34,7 +34,9 @@ impl ExampleRepository {
             .inserted_id
             .as_object_id()
             .map(ObjectId::to_hex)
-            .ok_or_else(|| DomainError::InvalidData("Falha ao obter id do registro criado".to_string()))?;
+            .ok_or_else(|| {
+                DomainError::InvalidData("Falha ao obter id do registro criado".to_string())
+            })?;
 
         Ok(id)
     }

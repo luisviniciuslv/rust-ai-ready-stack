@@ -2,8 +2,8 @@ use crate::adapters::mongodb::models::UserDocument;
 use crate::adapters::mongodb::to_app_error;
 use crate::error::AppResult;
 use mongodb::{
-    bson::Document,
     bson::doc,
+    bson::Document,
     options::{ClientOptions, IndexOptions, Tls, TlsOptions},
     Client, Collection, Database, IndexModel,
 };

@@ -12,7 +12,6 @@ use crate::domain::errors::DomainError;
 /// Implementa o padrão thiserror para mensagens de erro limpas
 #[derive(Error, Debug)]
 pub enum AppError {
-
     /// Erro ao acessar banco de dados vetorial
     #[error("Erro no banco de dados vetorial: {0}")]
     VectorDbError(String),

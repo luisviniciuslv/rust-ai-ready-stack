@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{State},
+    extract::State,
     http::{header::SET_COOKIE, HeaderValue, StatusCode},
     response::IntoResponse,
     Json,
