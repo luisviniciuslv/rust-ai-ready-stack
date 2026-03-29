@@ -96,6 +96,7 @@ impl From<DomainError> for AppError {
                 AppError::BadRequest(format!("Dados inválidos: {}", msg))
             }
             DomainError::VectorDbError(msg) => AppError::VectorDbError(msg),
+            DomainError::InternalError(msg) => AppError::InternalError(msg),
         }
     }
 }

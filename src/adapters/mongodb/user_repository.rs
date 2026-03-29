@@ -77,4 +77,22 @@ impl UserRepository for MongoRepo {
 
         Ok(user)
     }
+
+    async fn save_user(&self, user: User) -> Result<User, DomainError> {
+    let user_col = self.get_user_collection();
+    let filter = doc! { "email": user.email().as_str() };
+    
+    let update = doc! {
+        "$set": {
+            "email": user.email().as_str(),
+            "is_admin": user.is_admin(),
+        },
+        "$setOnInsert": { "is_manager": false }
+    };
+
+    user_col.update_one(filter, update).await.map_err(to_domain_error)?;
+    
+    self.find_by_email(user.email().as_str()).await?
+        .ok_or(DomainError::InternalError("Erro ao salvar usuário".to_string()))
+}
 }

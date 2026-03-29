@@ -1,6 +1,6 @@
-use crate::domain::entities::{AuthIdentity, GoogleUser};
+use crate::domain::entities::{AuthIdentity, GoogleUser, User};
 use crate::domain::errors::DomainError;
-use crate::domain::ports::{GoogleOAuthProvider, IdentityService, SessionCookieService};
+use crate::domain::ports::{GoogleOAuthProvider, IdentityService, SessionCookieService, UserRepository};
 use std::sync::Arc;
 
 pub struct AuthorizeGoogleUserResult {
@@ -15,6 +15,7 @@ pub struct AuthorizeGoogleUserUseCase {
     session_cookie_service: Arc<dyn SessionCookieService>,
     require_verified_email: bool,
     allowed_email_domains: Vec<String>,
+    user_repository: Arc<dyn UserRepository>,
 }
 
 impl AuthorizeGoogleUserUseCase {
@@ -24,6 +25,7 @@ impl AuthorizeGoogleUserUseCase {
         session_cookie_service: Arc<dyn SessionCookieService>,
         require_verified_email: bool,
         allowed_email_domains: Vec<String>,
+        user_repository: Arc<dyn UserRepository>,
     ) -> Self {
         Self {
             google_oauth_provider,
@@ -31,6 +33,7 @@ impl AuthorizeGoogleUserUseCase {
             session_cookie_service,
             require_verified_email,
             allowed_email_domains,
+            user_repository,
         }
     }
 
@@ -47,12 +50,14 @@ impl AuthorizeGoogleUserUseCase {
             .fetch_user_by_code(authorization_code, &redirect_uri)
             .await?;
 
-        let Some(identity) = self.ensure_allowed_user(user) else {
-            return Ok(AuthorizeGoogleUserResult {
-                redirect_url: frontend_url.to_string(),
-                auth_cookie: None,
-            });
-        };
+
+        let identity = self.ensure_allowed_user(user).ok_or(DomainError::Unauthorized(
+            "Usuário não autorizado".to_string()
+        ))?;
+
+        let domain_user = User::new(identity.email.clone()); 
+
+        let _ = self.user_repository.save_user(domain_user).await?;
 
         let token = self.identity_service.generate_token(&identity)?;
         let auth_cookie = self.session_cookie_service.build_auth_cookie(&token);

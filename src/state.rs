@@ -55,6 +55,7 @@ impl UseCases {
                 Arc::clone(&session_cookie_service),
                 require_google_verified_email,
                 allowed_google_email_domains,
+                Arc::clone(&user_repo),
             ),
             local_sign_in: LocalSignInUseCase::new(
                 Arc::clone(&identity_service),

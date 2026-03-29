@@ -36,4 +36,7 @@ pub enum DomainError {
 
     #[error("Erro no banco de dados vetorial: {0}")]
     VectorDbError(String),
+
+    #[error("Erro interno: {0}")]
+    InternalError(String),
 }
